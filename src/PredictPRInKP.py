@@ -1,4 +1,3 @@
-"""Predicting PR in Klebsiella Pneumoniae."""
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.feature_selection import RFECV
@@ -24,17 +23,16 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class PredictPRinKP:
-    """PredictPRinKP class definition."""
 
-    def __init__(self, datasets_full=None, datasets_gwas=None, fs_method = "RFE",  fs_estimator = "SVC"):
-        """Constructor PredictPRinKP."""
+    def __init__(self, datasets_full=None, datasets_gwas=None, feature_selection=None, train_models=None):
         self.dict_dataframes = {}
         self.dataset_full = datasets_full
         self.datasets_gwas = datasets_gwas
         self.SEED = 42
+        self.train_models = []
         self.models = {}
-        self.fs_method = fs_method
-        self.fs_estimator = fs_estimator
+        self.fs_method = feature_selection["method"]
+        self.fs_estimator = feature_selection["estimator"]
 
     def read_datasets(self):
         """Read datasets .csv ."""
@@ -139,13 +137,13 @@ class PredictPRinKP:
         metrics = ['roc_auc', 'balanced_accuracy', 'accuracy',
                    'f1', 'recall', 'precision']
         print("Best estimator metrics:")
-        # for metric in metrics:
-        #     print("--> Test {}(confidence interval 0.95):{}"
-        #           .format(metric,
-        # #                   self.mean_confidence_interval(grid.best_estimator_,
-        #                                                 x_test, y_test,
-        #                                                 scoring=metric,
-        #                                                 xgboost=xgboost)))
+        for metric in metrics:
+            print("--> Test {}(confidence interval 0.95):{}"
+                  .format(metric,
+                          self.mean_confidence_interval(grid.best_estimator_,
+                                                        x_test, y_test,
+                                                        scoring=metric,
+                                                        xgboost=xgboost)))
 
         curve_name = short_name + " " + dataset
         plot_roc_curve(grid.best_estimator_, x_test, y_test, name=curve_name)
@@ -153,27 +151,33 @@ class PredictPRinKP:
         # plt.show()
 
     def perform_train_full(self):
-        """Perform training of all models for each full dataset."""
-        print('\n############################# Full datasets '
-              '#############################')
-        for i in self.dataset_full:
+        print('\n############################# Full datasets #############################')
+        for dataset_name in self.dataset_full:
             print('----------------Training {}----------------'.format(i))
-            dataset = [self.dict_dataframes['df_full_' + i]]
-            metadata = [self.dict_dataframes['pbr_res_' + i]]
-            name = i
+            dataset = [self.dict_dataframes['df_full_' + dataset_name]]
+            metadata = [self.dict_dataframes['pbr_res_' + dataset_name]]
 
-            self.perform_feature_selection(dataset, metadata,dataset_name=name)
-            # self.train_KNN(dataset, metadata, name)
-            # self.train_SGDClassifier(dataset, metadata, name)
-            # self.train_logistic_regression(dataset, metadata, name)
-            # self.train_SVC(dataset, metadata, name)
-            # self.train_random_forest(dataset, metadata, name)
-            # self.train_GBTC(dataset, metadata, name)
-            # self.perform_XGB(dataset, metadata, name)
-            self.train_MLPC(dataset,metadata,name)
+            self.perform_feature_selection(dataset, metadata, dataset_name=dataset_name)
+
+            if "KNN" in self.train_models:
+                self.train_KNN(dataset, metadata, dataset_name)
+            if "SGDClassifier" in self.train_models:
+                self.train_SGDClassifier(dataset, metadata, dataset_name)
+            if "LogisticRegression" in self.train_models:
+                self.train_logistic_regression(dataset, metadata, dataset_name)
+            if "SVC" in self.train_models:
+                self.train_SVC(dataset, metadata, dataset_name)
+            if "RandomForestClassifier" in self.train_models:
+                self.train_random_forest(dataset, metadata, dataset_name)
+            if "GBTC" in self.train_models:
+                self.train_GBTC(dataset, metadata, dataset_name)
+            if "XGB" in self.train_models:
+                self.perform_XGB(dataset, metadata, dataset_name)
+            if "MLPClassifier" in self.train_models:
+                self.train_MLPC(dataset,metadata,dataset_name)
 
             for model in self.models:
-                self.save_trained_models(i, self.models[model], model)
+                self.save_trained_models(dataset_name, self.models[model], model)
 
             self.models = {}
 
@@ -183,33 +187,39 @@ class PredictPRinKP:
         """Perform training of all models for each gwas dataset."""
         print('\n############################# GWAS datasets '
               '#############################')
-        for i in self.datasets_gwas:
-            print('----------------Training {}----------------'.format(i))
-            dataset = [self.dict_dataframes['df_full_' + i],
+        for dataset_name in self.datasets_gwas:
+            print('----------------Training {}----------------'.format(dataset_name))
+            dataset = [self.dict_dataframes['df_full_' + dataset_name],
                        self.dict_dataframes['df_gwas_' + i]]
-            metadata = [self.dict_dataframes['pbr_res_' + i]]
-            name = i
+            metadata = [self.dict_dataframes['pbr_res_' + dataset_name]]
 
-            self.perform_feature_selection(dataset, metadata,
-                                           gwas=True, dataset_name=name)
+            self.perform_feature_selection(dataset, metadata, gwas=True, dataset_name=dataset_name)
 
-            self.train_KNN(dataset, metadata, name)
-            #self.train_SGDClassifier(dataset, metadata, name)
-            #self.train_logistic_regression(dataset, metadata, name)
-            #self.train_SVC(dataset, metadata, name)
-            #self.train_random_forest(dataset, metadata, name)
-            #self.train_GBTC(dataset, metadata, name)
-            #self.perform_XGB(dataset, metadata, name)
+            if "KNN" in self.train_models:
+                self.train_KNN(dataset, metadata, dataset_name)
+            if "SGDClassifier" in self.train_models:
+                self.train_SGDClassifier(dataset, metadata, dataset_name)
+            if "LogisticRegression" in self.train_models:
+                self.train_logistic_regression(dataset, metadata, dataset_name)
+            if "SVC" in self.train_models:
+                self.train_SVC(dataset, metadata, dataset_name)
+            if "RandomForestClassifier" in self.train_models:
+                self.train_random_forest(dataset, metadata, dataset_name)
+            if "GBTC" in self.train_models:
+                self.train_GBTC(dataset, metadata, dataset_name)
+            if "XGB" in self.train_models:
+                self.perform_XGB(dataset, metadata, dataset_name)
+            if "MLPClassifier" in self.train_models:
+                self.train_MLPC(dataset,metadata,dataset_name)
 
             for model in self.models:
-                self.save_trained_models(i, self.models[model], model)
+                self.save_trained_models(dataset_name, self.models[model], model)
 
             self.models = {}
 
         return self
         
-    def perform_feature_selection(self, dataset, metadata,
-                                  dataset_name, gwas=False):
+    def perform_feature_selection(self, dataset, metadata, gwas=False, dataset_name):
         
         print("---- Performing Feature Selection ----")
         if gwas is True:
