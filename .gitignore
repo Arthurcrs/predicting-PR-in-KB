@@ -1,0 +1,7 @@
+predict-PR-in-KP.code-workspace
+selected_features/*
+!selected_features/.gitkeep 
+src/__pycache__
+
+plots/*
+!plots/.gitkeep 
