@@ -1,25 +1,13 @@
-"""Run prediction script."""
 import sys
 import joblib as jb
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from PredictPRInKP import PredictPRinKP
+from TrainModels import PredictPRinKP
 from sklearn.metrics import accuracy_score, roc_auc_score,\
     balanced_accuracy_score, f1_score, \
     recall_score, precision_score
 
-
-# ################################################## #
-# Author: Jose Claudio Soares                        #
-# Email: joseclaudiosoaresneto@gmail.com             #
-# Date(mm/dd/yyyy): 11/03/2020                       #
-# Github: jcsn13                                     #
-# Credits: github.com/crowegian/AMR_ML               #
-# ################################################## #
-
-
 SEED = PredictPRinKP().SEED
-
 
 def read_dataset(dataset, gwas):
     """Read datasets .csv ."""
@@ -44,27 +32,25 @@ def read_dataset(dataset, gwas):
 
     return df_full, metadata, selected_features
 
-
 def get_test_set(dataset, metadata, selected_features):
     """Get train/test set with selected features."""
     dataset = dataset.loc[:, selected_features['Features']]
-    x_train, x_test, y_train, y_test = \
+    X_train, X_test, y_train, y_test = \
         train_test_split(dataset.values,
                          metadata.values.ravel(),
                          test_size=0.25,
                          random_state=SEED,
                          stratify=metadata.values.ravel())
 
-    return x_test, y_test
+    return X_test, y_test
 
-
-def run_prediction(x_test, y_test, model, dataset):
+def run_prediction(X_test, y_test, model, dataset):
     """Run Model predictions and print metrics."""
     model_path = '../models/' + dataset + '/' + dataset + model + '.pkl'
     saved_model = jb.load(model_path)
 
-    pred = saved_model.predict(x_test)
-    proba = saved_model.predict_proba(x_test)[:, 1]
+    pred = saved_model.predict(X_test)
+    proba = saved_model.predict_proba(X_test)[:, 1]
 
     print('Metrics:')
     print('Roc_auc ->', roc_auc_score(y_test, proba))
@@ -74,17 +60,15 @@ def run_prediction(x_test, y_test, model, dataset):
     print('Recall ->', recall_score(pred, y_test))
     print('Precision ->', precision_score(pred, y_test))
 
-
 def main(args):
     """Main run prediction functions."""
     df, metadata, selected_features = read_dataset(args[0], args[1])
 
-    x_test, y_test = get_test_set(df, metadata, selected_features)
+    X_test, y_test = get_test_set(df, metadata, selected_features)
 
-    run_prediction(x_test, y_test, args[2], args[0])
+    run_prediction(X_test, y_test, args[2], args[0])
 
     return 1
-
 
 if __name__ == "__main__":
     args = sys.argv[1:]

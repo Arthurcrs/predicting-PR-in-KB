@@ -29,8 +29,8 @@ class PredictPRinKP:
         self.dataset_full = datasets_full
         self.datasets_gwas = datasets_gwas
         self.SEED = 42
-        self.train_models = []
         self.models = {}
+        self.train_models = train_models
         self.fs_method = feature_selection["method"]
         self.fs_estimator = feature_selection["estimator"]
 
@@ -153,7 +153,7 @@ class PredictPRinKP:
     def perform_train_full(self):
         print('\n############################# Full datasets #############################')
         for dataset_name in self.dataset_full:
-            print('----------------Training {}----------------'.format(i))
+            print('----------------Training {}----------------'.format(dataset_name))
             dataset = [self.dict_dataframes['df_full_' + dataset_name]]
             metadata = [self.dict_dataframes['pbr_res_' + dataset_name]]
 
@@ -193,7 +193,7 @@ class PredictPRinKP:
                        self.dict_dataframes['df_gwas_' + i]]
             metadata = [self.dict_dataframes['pbr_res_' + dataset_name]]
 
-            self.perform_feature_selection(dataset, metadata, gwas=True, dataset_name=dataset_name)
+            self.perform_feature_selection(dataset, metadata, dataset_name, gwas=True)
 
             if "KNN" in self.train_models:
                 self.train_KNN(dataset, metadata, dataset_name)
@@ -219,8 +219,7 @@ class PredictPRinKP:
 
         return self
         
-    def perform_feature_selection(self, dataset, metadata, gwas=False, dataset_name):
-        
+    def perform_feature_selection(self, dataset, metadata, dataset_name, gwas=False):
         print("---- Performing Feature Selection ----")
         if gwas is True:
             gwas_feature_extractor = \
@@ -300,7 +299,6 @@ class PredictPRinKP:
         return self
 
     def train_KNN(self, dataset, metadata, name):
-        """Perform KNN training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -344,7 +342,6 @@ class PredictPRinKP:
         self.models[model_info[-1]] = grid.best_estimator_
 
     def train_SGDClassifier(self, dataset, metadata, name):
-        """Perform SGDC training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -368,7 +365,6 @@ class PredictPRinKP:
         return self
 
     def train_logistic_regression(self, dataset, metadata, name):
-        """Perform logistic regression training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -389,7 +385,6 @@ class PredictPRinKP:
         return self
 
     def train_SVC(self, dataset, metadata, name):
-        """Perform SVC training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -412,7 +407,6 @@ class PredictPRinKP:
         return self
 
     def train_GBTC(self, dataset, metadata, name):
-        """Perform GBTC training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -438,7 +432,6 @@ class PredictPRinKP:
         return self
 
     def train_random_forest(self, dataset, metadata, name):
-        """Perform Random Forest training."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -462,7 +455,6 @@ class PredictPRinKP:
         return self
 
     def perform_XGB(self, dataset, metadata, name):
-        """Perform XGB."""
         x_train, x_test, y_train, y_test = \
             train_test_split(dataset[0].values, metadata[0].values.ravel(),
                              test_size=0.25, random_state=self.SEED,
@@ -491,12 +483,10 @@ class PredictPRinKP:
         return self
 
     def save_trained_models(self, dataset, model, model_name):
-        """Save models in the chosen path."""
-        jb.dump(model, '../models/{}/{}.pkl'.format(dataset,
-                                                    dataset + model_name))
+        path = '../models/{}/{}.pkl'
+        jb.dump(model, path.format(dataset, dataset + model_name))
 
     def main(self):
-        """Main PredictPRinKP method."""
         self.read_datasets()
 
         if self.dataset_full:

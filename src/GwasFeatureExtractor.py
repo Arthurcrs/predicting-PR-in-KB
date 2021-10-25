@@ -1,15 +1,4 @@
-"""GWAS feature extractor class."""
 from sklearn.base import BaseEstimator, TransformerMixin
-
-
-# ################################################## #
-# Author: Jose Claudio Soares                        #
-# Email: joseclaudiosoaresneto@gmail.com             #
-# Date(mm/dd/yyyy): 11/03/2020                       #
-# Github: jcsn13                                     #
-# Credits: github.com/crowegian/AMR_ML               #
-# ################################################## #
-
 
 class GwasFeatureExtractor(BaseEstimator, TransformerMixin):
     """Extractor for low importance gwas features."""
